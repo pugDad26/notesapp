@@ -23,7 +23,10 @@ import {
   Button 
 } from 'antd';
 
-import { createTodo as CreateTodo } from './graphql/mutations';
+import { 
+  createTodo as CreateTodo
+  ,deleteTodo as DeleteNote 
+} from './graphql/mutations';
 
 const CLIENT_ID = uuid()
 
@@ -184,10 +187,40 @@ const createNote = async () => {
     });
   };
 
+  const deleteTodo = async (noteToDelete) => {
+    //Update state with the note removed
+    dispatch({
+      type: "SET_NOTES"
+      , notes: state.notes.filter(x => x != noteToDelete)
+    });
+    //Call backend delete note
+      try {
+        await API.graphql({
+          query: DeleteNote
+          , variables: { 
+            input: {
+              id: noteToDelete.id 
+            }
+          }
+        });
+      }
+      catch (err) {
+        console.error({ err })
+      }
+  }
+
   const renderItem = (item) => {
     return (
       <List.Item 
         style={styles.item}
+        actions={[
+          <p
+            style={styles.p}
+            onClick={() => deleteTodo(item)}
+          >
+            Delete
+          </p>
+        ]}
       >
         <List.Item.Meta
           title={item.name}
