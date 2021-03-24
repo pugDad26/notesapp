@@ -29,6 +29,8 @@ import {
   ,updateTodo as UpdateNote
 } from './graphql/mutations';
 
+import { onCreateTodo } from './graphql/subscriptions';
+
 const CLIENT_ID = uuid()
 
 const initialState = {
@@ -121,8 +123,32 @@ const App = () => {
   useEffect(
     () => {
       fetchNotes();
-    },
-    [] 
+
+      const subscription = API.graphql(
+        {
+          query: onCreateTodo
+        }
+      ).subscribe(
+        {
+          next: (notesData) => {
+            //Get the note from the subscription payload?
+            const note = notesData.value.data.onCreateTodo;
+
+            //Bail if this instance of the app caused this subscription,
+            if (note.clientId === CLIENT_ID) {
+              return;
+            }
+            //Otherwise update the state with the new note
+            dispatch({
+              type: "ADD_NOTE"
+              , note: note
+            });
+          }
+        }
+      );
+      return () => subscription.unsubscribe();
+    }
+    ,[] 
   );
 
   const styles = {
