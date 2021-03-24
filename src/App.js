@@ -26,6 +26,7 @@ import {
 import { 
   createTodo as CreateTodo
   ,deleteTodo as DeleteNote 
+  ,updateTodo as UpdateNote
 } from './graphql/mutations';
 
 const CLIENT_ID = uuid()
@@ -209,6 +210,33 @@ const createNote = async () => {
       }
   }
 
+  const updateTodo = async (noteToUpdate) => {
+    //Update State
+    dispatch({
+      type: "SET_NOTES"
+      , notes: state.notes.map(x => ({
+        ...x
+        , completed: x == noteToUpdate ? !x.completed : x.completed
+      }))
+    });
+
+    //Call the Backend
+    try {
+      await API.graphql({
+        query: UpdateNote
+        , variables: {
+          input: {
+            id: noteToUpdate.id
+            , completed: !noteToUpdate.completed
+          }
+        }
+      });
+    }
+    catch(err) {
+      console.error(err);
+    }
+  }
+
   const renderItem = (item) => {
     return (
       <List.Item 
@@ -220,10 +248,16 @@ const createNote = async () => {
           >
             Delete
           </p>
+          , <p
+              style={styles.p}
+              onClick={() => updateTodo(item)}
+            >
+              { item.completed ? 'Mark Incomplete' : 'Mark Complete' }
+          </p>
         ]}
       >
         <List.Item.Meta
-          title={item.name}
+          title={ item.name + (item.completed ? ' (completed)' : '' )}
           description={item.description}
         />
       </List.Item>
